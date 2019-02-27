@@ -30,7 +30,7 @@ endian|LONGINT|
 bytes|BLOB|
 
 ```
-float:=BLOB to float (bytes{;format{;precision}})
+float:=BLOB to float (bytes{;format{;endian{;precision}}})
 ```
 
 Parameter|Type|Description
