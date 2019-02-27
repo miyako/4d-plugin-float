@@ -16,14 +16,14 @@ Convert float32 data to text and back
 ## Syntax
 
 ```
-bytes:=float to BLOB (float{;format})
+bytes:=float to BLOB (float{;endian})
 ```
 
 Parameter|Type|Description
 ------------|------------|----
 float|TEXT|
+endian|LONGINT|
 bytes|BLOB|
-format|LONGINT|
 
 ```
 float:=BLOB to float (bytes{;format{;precision}})
@@ -53,3 +53,22 @@ float|TEXT|
 
 **Note**: ``-1`` is the default (``FLT_DECIMAL_DIG - 1`` or ``5``)
 
+### Examples
+
+```
+$bytes:=float to BLOB ("1";Float little endian)
+
+ASSERT(BLOB size($bytes)=4)
+ASSERT($bytes{3}=0x003F)
+ASSERT($bytes{2}=0x0080)
+ASSERT($bytes{1}=0x0000)
+ASSERT($bytes{0}=0x0000)
+
+$bytes:=float to BLOB ("1";Float big endian)
+
+ASSERT(BLOB size($bytes)=4)
+ASSERT($bytes{0}=0x003F)
+ASSERT($bytes{1}=0x0080)
+ASSERT($bytes{2}=0x0000)
+ASSERT($bytes{3}=0x0000)
+```
