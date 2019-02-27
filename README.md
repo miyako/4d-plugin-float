@@ -13,6 +13,10 @@ Convert float32 data to text and back
 
 ![preemption xx](https://user-images.githubusercontent.com/1725068/41327179-4e839948-6efd-11e8-982b-a670d511e04f.png)
 
+### Releases
+
+[1.0](https://github.com/miyako/4d-plugin-float/releases/tag/1.0)
+
 ## Syntax
 
 ```
@@ -52,7 +56,7 @@ float|TEXT|
 
 * ``Float precision default``: number pass to ``.*`` format of ``printf()``  
 
-**Note**: ``-1`` is the default (``FLT_DECIMAL_DIG - 1`` or ``5``)
+**Note**: ``0`` is the default (``FLT_DECIMAL_DIG - 1`` or ``5``) pass ``-1`` to specify no digits after decimal point
 
 ### Examples
 
@@ -101,7 +105,7 @@ ASSERT($bytes{0}=0x0000)
 
 $f:=BLOB to float ($bytes;Float decimal floating point)  //1.00000000
 $e:=BLOB to float ($bytes;Float scientific notation)  //1.00000000e+00
-$g:=BLOB to float ($bytes;Float shortest format)  //3.95253e-323 on 32-bit, 1 on 64-bit
+$g:=BLOB to float ($bytes;Float shortest format)  //1
 
 $bytes:=float to BLOB ("1";Float big endian)
 
