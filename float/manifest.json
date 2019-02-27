@@ -1,0 +1,16 @@
+{
+	"name": "Float",
+	"id": 20000,
+	"commands": [
+		{
+			"theme": "IEEE 754",
+			"syntax": "BLOB to float(&O;&L;&L;&L):T",
+			"threadSafe": true
+		},
+		{
+			"theme": "IEEE 754",
+			"syntax": "float to BLOB(&T;&L):O",
+			"threadSafe": true
+		}
+	]
+}
