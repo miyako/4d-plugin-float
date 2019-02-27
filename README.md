@@ -90,4 +90,29 @@ ASSERT($bytes{2}=0x003F)
 ASSERT($bytes{3}=0x00FF)
 ```
 
+```
+$bytes:=float to BLOB ("1";Float little endian)
+
+ASSERT(BLOB size($bytes)=4)
+ASSERT($bytes{3}=0x003F)
+ASSERT($bytes{2}=0x0080)
+ASSERT($bytes{1}=0x0000)
+ASSERT($bytes{0}=0x0000)
+
+$f:=BLOB to float ($bytes;Float decimal floating point)  //1.00000000
+$e:=BLOB to float ($bytes;Float scientific notation)  //1.00000000e+00
+$g:=BLOB to float ($bytes;Float shortest format)  //3.95253e-323 on 32-bit, 1 on 64-bit
+
+$bytes:=float to BLOB ("1";Float big endian)
+
+ASSERT(BLOB size($bytes)=4)
+ASSERT($bytes{0}=0x003F)
+ASSERT($bytes{1}=0x0080)
+ASSERT($bytes{2}=0x0000)
+ASSERT($bytes{3}=0x0000)
+
+$f:=BLOB to float ($bytes;Float decimal floating point;Float big endian)
+$e:=BLOB to float ($bytes;Float scientific notation;Float big endian)
+$g:=BLOB to float ($bytes;Float shortest format;Float big endian)
+```
 
