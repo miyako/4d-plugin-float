@@ -16,7 +16,7 @@ Convert float32 data to text and back
 ## Syntax
 
 ```
-float:=BLOB to float (bytes{;format{;precision}})
+bytes:=float to BLOB (float{;format})
 ```
 
 Parameter|Type|Description
@@ -24,7 +24,17 @@ Parameter|Type|Description
 float|TEXT|
 bytes|BLOB|
 format|LONGINT|
+
+```
+float:=BLOB to float (bytes{;format{;precision}})
+```
+
+Parameter|Type|Description
+------------|------------|----
+bytes|BLOB|
+format|LONGINT|
 precision|LONGINT|
+float|TEXT|
 
 #### Float formats
 
@@ -42,3 +52,4 @@ precision|LONGINT|
 * ``Float precision default``: number pass to ``.*`` format of ``printf()``  
 
 **Note**: ``-1`` is the default (``FLT_DECIMAL_DIG - 1`` or ``5``)
+
