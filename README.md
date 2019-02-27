@@ -56,38 +56,6 @@ float|TEXT|
 
 ### Examples
 
-```
-$bytes:=float to BLOB ("1";Float little endian)
 
-ASSERT(BLOB size($bytes)=4)
-ASSERT($bytes{3}=0x003F)
-ASSERT($bytes{2}=0x0080)
-ASSERT($bytes{1}=0x0000)
-ASSERT($bytes{0}=0x0000)
 
-$bytes:=float to BLOB ("1";Float big endian)
 
-ASSERT(BLOB size($bytes)=4)
-ASSERT($bytes{0}=0x003F)
-ASSERT($bytes{1}=0x0080)
-ASSERT($bytes{2}=0x0000)
-ASSERT($bytes{3}=0x0000)
-```
-
-```
-$bytes:=float to BLOB ("1";Float little endian)
-
-ASSERT(BLOB size($bytes)=4)
-ASSERT($bytes{3}=0x003F)
-ASSERT($bytes{2}=0x0080)
-ASSERT($bytes{1}=0x0000)
-ASSERT($bytes{0}=0x0000)
-
-$f:=BLOB to float ($bytes;Float decimal floating point)  //1.00000000
-$e:=BLOB to float ($bytes;Float scientific notation)  //1.00000000e+00
-$g:=BLOB to float ($bytes;Float shortest format)  //1
-
-$f:=BLOB to float ($bytes;Float decimal floating point;2)  //1.00
-$e:=BLOB to float ($bytes;Float scientific notation;2)  //1.00e+00
-$g:=BLOB to float ($bytes;Float shortest format;2)  //1
-```
