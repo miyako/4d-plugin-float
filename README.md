@@ -33,6 +33,7 @@ Parameter|Type|Description
 ------------|------------|----
 bytes|BLOB|
 format|LONGINT|
+endian|LONGINT|
 precision|LONGINT|
 float|TEXT|
 
