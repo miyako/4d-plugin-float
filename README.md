@@ -30,7 +30,7 @@ endian|LONGINT|
 bytes|BLOB|
 
 ```
-float:=BLOB to float (bytes{;format{;precision}})
+float:=BLOB to float (bytes{;format{;endian{;precision}}})
 ```
 
 Parameter|Type|Description
@@ -54,7 +54,7 @@ float|TEXT|
 
 #### Float precision
 
-* ``Float precision default``: number pass to ``.*`` format of ``printf()``  
+* ``Float precision default``: number passed to ``.*`` format of ``printf()``  
 
 **Note**: ``0`` is the default (``FLT_DECIMAL_DIG - 1`` or ``5``) pass ``-1`` to specify no digits after decimal point
 
