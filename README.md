@@ -15,7 +15,7 @@ Convert float32 data to text and back
 
 ### Releases
 
-[1.0](https://github.com/miyako/4d-plugin-float/releases/tag/1.0)
+[1.1](https://github.com/miyako/4d-plugin-float/releases/tag/1.1)
 
 ## Syntax
 
