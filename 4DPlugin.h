@@ -8,7 +8,10 @@
  #
  # --------------------------------------------------------------------------------*/
 
-
+#include <cfloat>  /* FLT_DECIMAL_DIG */
+#include <cstdio>  /* snprintf */
+#include <cstdlib> /* strtof */
+#include <cstring> /* memcpy, memset */
 
 // --- IEEE 754
 void BLOB_to_float(sLONG_PTR *pResult, PackagePtr pParams);

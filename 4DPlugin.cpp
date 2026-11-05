@@ -61,11 +61,12 @@ void BLOB_to_float(sLONG_PTR *pResult, PackagePtr pParams)
 	Param3.fromParamAtIndex(pParams, 3);
     Param4.fromParamAtIndex(pParams, 4);
     
-    float_size_t size = Param1.getBytesLength();
-    float_convert_mode_t mode = (float_convert_mode_t)Param2.getIntValue();
-    float_string_length_t len;
+    /* uint32_t, not float_size_t (unsigned char): a 260-byte BLOB used to wrap to 4 and be accepted */
+    uint32_t size = Param1.getBytesLength();
+    int mode = Param2.getIntValue();
+    int len = 0;
     float_precision_t precision = Param4.getIntValue();
-    float_endian_t endian = (float_endian_t)Param3.getIntValue();
+    int endian = Param3.getIntValue();
     
     switch (precision) {
         case -1:
@@ -78,6 +79,7 @@ void BLOB_to_float(sLONG_PTR *pResult, PackagePtr pParams)
             break;
     }
     
+    try {
     switch (size) {
         case sizeof(float):
         {
@@ -109,25 +111,28 @@ void BLOB_to_float(sLONG_PTR *pResult, PackagePtr pParams)
                 case float_convert_mode_e:
                 {
                     len = snprintf(0, 0, float_fmt_e, precision, f32);
+                    if(len < 0) break;
                     std::vector<uint8_t>buf(len + 1);
                     snprintf((char *)&buf[0], buf.size(), float_fmt_e, precision, f32);
-                    returnValue.setUTF8String(&buf[0],len);
+                    returnValue.setUTF8String(&buf[0],(uint32_t)len);
                 }
                     break;
                 case float_convert_mode_f:
                 {
                     len = snprintf(0, 0, float_fmt_f, precision, f32);
+                    if(len < 0) break;
                     std::vector<uint8_t>buf(len + 1);
                     snprintf((char *)&buf[0], buf.size(), float_fmt_f, precision, f32);
-                    returnValue.setUTF8String(&buf[0],len);
+                    returnValue.setUTF8String(&buf[0],(uint32_t)len);
                 }
                     break;
                 case float_convert_mode_g:
                 {
                     len = snprintf(0, 0, float_fmt_g, precision, f32);
+                    if(len < 0) break;
                     std::vector<uint8_t>buf(len + 1);
                     snprintf((char *)&buf[0], buf.size(), float_fmt_g, precision, f32);
-                    returnValue.setUTF8String(&buf[0],len);
+                    returnValue.setUTF8String(&buf[0],(uint32_t)len);
                 }
                     break;
                 default:
@@ -139,6 +144,10 @@ void BLOB_to_float(sLONG_PTR *pResult, PackagePtr pParams)
             
         default:
             break;
+    }
+    } catch(...) {
+        /* fall through: return whatever was set (empty text) instead of letting
+           PluginMain swallow the exception before a result is returned */
     }
 
 	returnValue.setReturn(pResult);
@@ -153,12 +162,12 @@ void float_to_BLOB(sLONG_PTR *pResult, PackagePtr pParams)
 	Param1.fromParamAtIndex(pParams, 1);
 	Param2.fromParamAtIndex(pParams, 2);
 
-    std::vector<uint8_t>bytes(sizeof(float));
-    memset((void *)&bytes[0], 0x0, sizeof(float));
+    uint8_t bytes[sizeof(float)] = {0};
     float f32 = 0.0f;
     
-    float_endian_t endian = (float_endian_t)Param2.getIntValue();
+    int endian = Param2.getIntValue();
     
+    try {
     CUTF8String s;
     Param1.copyUTF8String(&s);
     
@@ -181,6 +190,10 @@ void float_to_BLOB(sLONG_PTR *pResult, PackagePtr pParams)
                 memcpy((void *)&bytes[0], &buf[0], sizeof(float));
                 break;
         }
+    }
+    } catch(...) {
+        /* return 4 zero bytes rather than no result */
+        memset(bytes, 0x0, sizeof(float));
     }
     
     returnValue.setBytes((const uint8_t *)&bytes[0], sizeof(float));
