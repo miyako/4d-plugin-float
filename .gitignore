@@ -1,0 +1,8 @@
+.DS_Store
+build/
+*.4dbase/Logs/
+*.4dbase/userPreferences.*/
+Float.4dbase/Plugins/Float.bundle/Contents/MacOS/
+Float.4dbase/Plugins/Float.bundle/Contents/_CodeSignature/
+/Float.dmg
+/Float.zip
