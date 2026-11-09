@@ -40,6 +40,54 @@ Converts between text and IEEE 754 single-precision (32-bit, `float32`) values s
 - **Decimal separator.** `strtof()` and `snprintf()` use the C library's numeric locale. Whether 4D changes that locale is not established here; in the default C locale the separator is always a period (`.`), whatever the system's regional settings. Test on your configuration if you exchange this text with `String`/`Num`.
 - The Windows 64-bit binary in the bundle is the prebuilt `Float.4DX` from the 1.2 release; the release workflow builds and signs only the macOS binary.
 
+## Maintainer release lifecycle
+
+Run **Bump version** manually on the desired branch, choosing patch, minor or
+major. It validates strict `X.Y.Z` source metadata, updates every
+`MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `Float.xcodeproj` and the
+literal source `Info.plist` version fields (including `CFBundleVersion` when
+present), and commits only those files. Recognized Xcode references to these
+keys are validated and preserved. Both Xcode keys are coordinated release
+versions, not independent counters: the original bump contract and source
+history agree at 1.2.0. Prebuilt bundle, dependency and 4D schema metadata are
+not version authorities and are not rewritten.
+
+The bump pushes explicitly to the selected branch without force or follow-tags,
+even with `push.followTags=true`; an advanced, rewound or deleted selected
+branch is rejected. It creates no tag and starts no Build.
+
+Run **Build** manually using only the Actions branch selector
+(`gh workflow run release.yml --ref <branch>`). There are no typed inputs and
+no push trigger. Every checkout uses the immutable selected `github.sha`.
+Source validation and publication availability precede the existing universal
+macOS build, prebuilt-library checks, architecture/resource verification,
+Developer ID signing, ZIP/DMG packaging, accepted notarization of both assets
+and DMG stapling. Windows64 remains prebuilt and ships unchanged.
+Assets remain `Float-X.Y.Z.zip` and `Float-X.Y.Z.dmg`.
+
+Build runs serialize repository-wide across branches. After all gates, it
+rechecks the remote tag and authenticated, paginated releases listing; **any**
+same-tag release, including a draft, blocks publication. API, authentication,
+network, malformed response and later-page failures fail closed. It creates
+`vX.Y.Z` using create-only `POST git/refs` at exactly the selected SHA (even
+same-SHA creation races fail), verifies the remote target, then uses create-only
+`POST releases` with explicit tag, SHA, name, `draft=false`, `prerelease=false`
+and an empty body, preserving the original non-generated notes policy.
+Uploads use `gh release upload` without clobbering.
+
+**Manual recovery:** Publication never deletes, patches, rolls back, replaces
+assets or retries automatically. A tag, release or partial upload created before
+a failure remains for inspection, and another Build for that version will fail.
+Inspect the failed run, selected SHA, remote tag, release (including drafts) and
+assets before a maintainer decides how to recover manually or prepares a new
+source version. Do not blindly rerun publication.
+
+Local regression checks (no native build, signing or remote publication):
+`python3 -m unittest discover -s .github/tests -v` and `actionlint`.
+Tests use PyYAML (`python3 -m pip install -r .github/tests/requirements.txt`
+if unavailable) and disposable local bare Git remotes; all GitHub API calls
+are mocked.
+
 ---
 
 ## float to BLOB
