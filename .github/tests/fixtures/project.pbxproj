@@ -1,0 +1,9 @@
+// Stable coordinated version fixture, deliberately independent of live source.
+{
+    MARKETING_VERSION = 2.3.4;
+    CURRENT_PROJECT_VERSION = 2.3.4;
+    MARKETING_VERSION = 2.3.4;
+    CURRENT_PROJECT_VERSION = 2.3.4;
+    objectVersion = 46;
+    MACOSX_DEPLOYMENT_TARGET = 11.5;
+}
