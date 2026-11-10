@@ -88,6 +88,120 @@ Tests use PyYAML (`python3 -m pip install -r .github/tests/requirements.txt`
 if unavailable) and disposable local bare Git remotes; all GitHub API calls
 are mocked.
 
+## Native ownership maintenance
+
+The bounded audit baseline is `60547f232aaba1be7bdb9b770bb93528d584b627`.
+Both root and bundled manifests declare only the two scalar commands above.
+That does not exclude dormant helpers: Xcode and both Visual Studio projects
+compile the SDK, dispatcher and **all 16 wrapper implementations**. The SDK
+header includes all wrapper headers. The Windows definition exports
+`FourDPackex`; its actual implementation initializes the engine callback and
+calls `PluginMain`, which dispatches selectors 1 and 2.
+
+The complete baseline native inventory (43 tracked files) is:
+
+| Surface | Files / classification |
+|---|---|
+| Entry | `4DPlugin.cpp`, `4DPlugin.h`, `4D Plugin_Prefix.pch` |
+| String and picture wrappers | `Classes/C_TEXT.{cpp,h}`, `ARRAY_TEXT.{cpp,h}`, `C_PICTURE.{cpp,h}` under `4D Plugin API/` |
+| Other wrappers | `C_BLOB`, `C_POINTER`, `C_DATE`, `C_INTEGER`, `C_LONGINT`, `C_REAL`, `C_TIME`, `ARRAY_BOOLEAN`, `ARRAY_DATE`, `ARRAY_INTEGER`, `ARRAY_LONGINT`, `ARRAY_REAL`, `ARRAY_TIME`, each `.cpp` and `.h` in the same directory |
+| Shared types | `4D Plugin API/Classes/C_TYPES.h` |
+| Bundled SDK / exports | `4D Plugin API/4DPluginAPI.{c,h,def}`, `EntryPoints.h`, `Flags.h`, `PrivateTypes.h`, `PublicTypes.h` |
+
+`Float.xcodeproj/project.pbxproj`, `Float.vcxproj`, `Float.vc10.vcxproj` and
+their filters establish compilation/include reachability. There are no other
+tracked baseline native source extensions or separate third-party native
+libraries. Numeric/date/time/Boolean wrappers do not own strings. BLOB text
+conversion uses independent `C_TEXT` storage. Scalar command inputs are
+copied; text returns use the content setter, not descriptor transfer.
+
+The **actual bundled** `4DPluginAPI.c` SHA-256 is
+`2721c3d4338cc2a350599ffcee2a8008abaa756acfd45dd710720c64ca8c8ce3`.
+It is byte-identical to the file introduced at the root by
+`caf7077851a99c3b17da41e0cf57a311f17af5dd` and to
+`float/4D Plugin API/4DPluginAPI.c` in the initial 2019 commit
+`e00bc9d67dafc418128bdfaad67fc90dc265e92b`. Its v14 comment and the headers'
+v13 comments are not independently verified upstream SDK release identifiers.
+The SDK is unchanged by this fix.
+
+Contracts verified in that implementation:
+
+- `PA_SetStringInArray` disposes the old element and shallow-transfers the
+  supplied descriptor only for Unicode arrays with non-null data, index
+  `0 <= i <= fNbElements`, and a non-null descriptor pointer. Rejections
+  retain the caller's owner. `PA_GetStringInArray` is borrowed.
+  `ARRAY_TEXT` copies borrowed input and allocates each output independently;
+  it must not dispose an accepted transferred string.
+- Scalar string/picture variable setters shallow-assign and do not clear
+  old contents. Use an Undefined destination before assigning an existing
+  owned value or a temporarily borrowed picture. Creating a string/picture
+  variable first allocates an empty owner which such a setter overwrites.
+  `PA_SetUnistring` / `PA_ReturnString` instead use the engine content setter.
+- `PA_GetPictureVariable` is explicitly borrowed; `setPicture` retains.
+  `fromFileAtPath` clears its path owner once and clears the output argument
+  after retaining it. `setBytes` releases its temporary picture after retain.
+  Copy/grayscale/thumbnail return an owning picture to the caller, which must
+  eventually call `PA_DisposePicture`. Borrowed synchronous picture inputs
+  are still detached before argument cleanup.
+- Charset conversion returns **bytes**, excluding the terminator, while
+  `CUTF16String` lengths count UTF-16 code units. `createCopy` divides by
+  `sizeof(PA_Unichar)`.
+- Command handle-allocation failure returns a raw-kind-0 sentinel, not an
+  owned string to clear. Method handle-allocation failure returns Undefined.
+  The picture commands used here have no owning command return. Independent
+  synchronous string arguments and owning method/command returns are
+  separately released in the contract regression.
+
+Run the non-release macOS regression with:
+
+```sh
+bash tests/run_native_ownership.sh
+```
+
+It compiles the **full unchanged SDK**, every production wrapper and the actual
+dispatcher with ASan/UBSan, using synthetic fixtures and a strict
+engine-boundary callback. Unknown engine/UI calls abort; no actual picture
+commands, windows, files, release build phases or external services execute.
+String allocations, handles and picture references must balance explicitly
+(macOS LeakSanitizer is unavailable). Coverage includes exact ASCII, BMP,
+surrogate pairs and empty text; allocated/null empty strings; byte capacities
+and terminators; independent transfers/borrowed copies; array replacement,
+shrink and clear; rejected destinations; retained handoffs; unchanged/replaced
+picture inputs; and command/handle failures.
+
+For baseline reproduction, extract the native sources with `git archive`
+into a separate directory, then run the **same current harness**:
+
+```sh
+git archive 60547f232aaba1be7bdb9b770bb93528d584b627 \
+  '4D Plugin API' 4DPlugin.cpp 4DPlugin.h | tar -x -C /path/to/empty-baseline
+bash tests/run_native_ownership.sh /path/to/empty-baseline --expect-baseline-defects
+```
+
+Eight named baseline failures are expected: `path` (double disposal),
+`path-empty` (retained output leak with null empty strings), `bytes` (temporary
+reference leak), `copy` (ASan heap-buffer-overflow), `copy-empty` (overwritten
+empty string/picture owners), and `gray`, `size`, `thumbnail` (overwritten
+empty picture owners). The fixed source passes all 39 matrix invocations.
+
+**Deferred / not certified:** `C_POINTER::getVariable` metadata ownership,
+SDK-only app-path outputs and picture-data metadata output ownership cannot
+be settled from the bundled forwarding code; no speculative cleanup is added.
+Failed picture-data outputs are not adopted or cleared. Object/collection
+getters and JSON Parse are not used by first-party code here. Successful
+ordinary-array tests do not certify resize OOM: the bundled SDK updates its
+element count even if handle resize fails. SDK/OOM hardening, generic wrapper
+copyability, unrelated algorithms and full platform testing are outside this
+fix. This is native macOS host-shim evidence, not execution in real 4D or
+Windows and not reproduction of the originating Poppler Windows crash.
+
+Both existing Actions workflows are manual-only. Native regression compilation
+bypasses the Xcode signing/notarization/packaging phase; it neither runs nor
+changes release workflows, project files, manifests, SDK files or binaries.
+The separate **Native ownership regression** pull-request workflow runs only
+the fixed-source and immutable-baseline shim tests, with read-only permissions
+and no artifact publication.
+
 ---
 
 ## float to BLOB
