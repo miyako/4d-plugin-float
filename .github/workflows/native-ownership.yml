@@ -1,0 +1,33 @@
+name: Native ownership regression
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - '4DPlugin.cpp'
+      - '4DPlugin.h'
+      - '4D Plugin API/**'
+      - 'tests/**'
+      - '.github/workflows/native-ownership.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  native-ownership:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fixed production sources with ASan and UBSan
+        run: bash tests/run_native_ownership.sh
+      - name: Same harness rejects the immutable original sources
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/float-native-baseline"
+          git archive 60547f232aaba1be7bdb9b770bb93528d584b627 \
+            '4D Plugin API' 4DPlugin.cpp 4DPlugin.h \
+            | tar -x -C "$RUNNER_TEMP/float-native-baseline"
+          bash tests/run_native_ownership.sh \
+            "$RUNNER_TEMP/float-native-baseline" --expect-baseline-defects
